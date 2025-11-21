@@ -95,10 +95,9 @@ fun RegistryScreen() {
         Text("Уже есть аккаунт", Modifier.clickable {
             println("Переход на экран входа")
         })
-
     }
 }
-//dsa
+
 /**
  * Для символов * в пароле
  */
@@ -115,3 +114,4 @@ class AsteriskPasswordVisualTransformation(
     }
 }
 //ыщфвщгшргшщвцзгшщвщзшфцв
+//gr

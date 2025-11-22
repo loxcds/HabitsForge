@@ -12,6 +12,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.HabitsForge">
         <activity
+            android:name=".MenuActivity"
+            android:exported="false" />
+        <activity
+            android:name=".EnterActivity"
+            android:exported="false" />
+        <activity
             android:name=".RegisterActivity"
             android:exported="false" />
         <activity

@@ -36,6 +36,20 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.kulbekk.habitsforge.ui.theme.HabitsForgeTheme
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import java.time.DayOfWeek
+import java.time.format.TextStyle
+import java.util.Locale
+import kotlin.text.format
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.toMutableStateList
 
 @Preview(showBackground = true, device = Devices.PIXEL)
 @Composable
@@ -198,8 +212,112 @@ fun EnterActivity(navController: NavController? = null) {
 }
 @Composable
 fun MenuActivity(navController: NavController? = null){
-    Text("MainMenu")
+    MyCalendarScreen()
 }
+// Data class для представления дня
+data class CalendarDay(
+    val dayOfMonth: String,
+    val dayOfWeek: String,
+    val isSelected: Boolean = false
+)
+
+/**
+ * Composable-функция для отображения отдельного дня календаря с обработчиком клика.
+ * @param onClick Функция, вызываемая при нажатии на этот день.
+ */
+@Composable
+fun DayItem(day: CalendarDay, onClick: () -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .padding(horizontal = 4.dp)
+            .clickable(onClick = onClick) // Добавляем кликабельность ко всему столбцу дня
+    ) {
+        // День недели (над кругом)
+        Text(
+            text = day.dayOfWeek,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = Color.Gray
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // Число в круге
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(if (day.isSelected) Color.Blue else Color.LightGray)
+        ) {
+            Text(
+                text = day.dayOfMonth,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = if (day.isSelected) Color.White else Color.Black
+            )
+        }
+    }
+}
+
+/**
+ * Composable-функция для отображения строки недели.
+ */
+@Composable
+fun WeekRow(days: List<CalendarDay>, onDayClick: (CalendarDay) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 10.dp),
+        horizontalArrangement = Arrangement.SpaceAround
+    ) {
+        days.forEach { day ->
+            DayItem(day = day, onClick = { onDayClick(day) }) // Передаем обработчик клика
+        }
+    }
+}
+
+// Пример использования (раскомментируйте и добавьте в ваш код):
+
+
+@Composable
+fun MyCalendarScreen() {
+    // 1. Инициализируем список дней и сохраняем его в состоянии с помощью remember
+    val initialDays = listOf(
+        CalendarDay("31", "Вс"),
+        CalendarDay("1", "Пн"),
+        CalendarDay("2", "Вт"),
+        CalendarDay("3", "Ср"),
+        CalendarDay("4", "Чт"),
+        CalendarDay("5", "Пт"),
+        CalendarDay("6", "Сб")
+    ).toMutableStateList() // Преобразуем в изменяемый список состояния
+
+    val weekDays = remember { initialDays }
+
+    // 2. Определяем обработчик клика, который обновляет состояние
+    val handleDayClick: (CalendarDay) -> Unit = { clickedDay ->
+        // Находим индекс кликнутого дня
+        val index = weekDays.indexOf(clickedDay)
+        if (index != -1) {
+            // Сначала сбрасываем выбор со всех остальных дней (опционально, если нужен только один выбор)
+            weekDays.forEachIndexed { i, day ->
+                if (i != index && day.isSelected) {
+                    weekDays[i] = day.copy(isSelected = false)
+                }
+            }
+            // Обновляем состояние выбранного дня, создавая его копию с isSelected = true
+            weekDays[index] = clickedDay.copy(isSelected = !clickedDay.isSelected)
+        }
+    }
+
+    Column {
+        // 3. Передаем изменяемый список и обработчик клика в WeekRow
+        WeekRow(days = weekDays, onDayClick = handleDayClick)
+    }
+}
+
 
 class AsteriskPasswordVisualTransformation(
     private val mask: Char = '*'

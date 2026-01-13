@@ -94,7 +94,7 @@ class MenuActivity : AppCompatActivity() {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 10.dp), // Отступ 10px сверху от самого верха
+                .padding(toФp = 10.dp), // Отступ 10px сверху от самого верха
             horizontalArrangement = Arrangement.SpaceAround // Равномерное распределение элементов
         ) {
             days.forEach { day ->

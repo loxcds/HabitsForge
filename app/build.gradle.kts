@@ -63,7 +63,8 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-    //my add
-    implementation("androidx.navigation:navigation-compose:")
-    implementation("org.jetbrains.kotlinx:kotlinx-datetime:") // calendar, datetime
+
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:")
+    implementation("androidx.compose.material:material-icons-extended:")
 }

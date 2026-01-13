@@ -67,4 +67,18 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:")
     implementation("androidx.compose.material:material-icons-extended:")
+    implementation("androidx.navigation:navigation-compose:2.9.6")
+
+    // Views/Fragments Integration
+    implementation("androidx.navigation:navigation-fragment:2.9.6")
+    implementation("androidx.navigation:navigation-ui:2.9.6")
+
+    // Feature module support for Fragments
+    implementation ("androidx.navigation:navigation-dynamic-features-fragment:2.9.6")
+
+    // Testing Navigation
+    androidTestImplementation("androidx.navigation:navigation-testing:2.9.6")
+
+    // JSON serialization library, works with the Kotlin serialization plugin.
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 }

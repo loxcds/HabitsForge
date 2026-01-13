@@ -1,117 +1,110 @@
 package com.kulbekk.habitsforge
 
 import android.os.Bundle
+import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import java.time.DayOfWeek
-import java.time.format.TextStyle
-import java.util.Locale
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.runtime.*
-import androidx.compose.ui.platform.LocalContext
 import kotlinx.datetime.*
-
+import java.util.Calendar
 
 class MenuActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(R.layout.activity_menu)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
-    }
-
-
-    // Data class для представления дня
-    data class CalendarDay(
-        val date: LocalDate,
-        val dayOfMonth: String,
-        val dayOfWeek: String,
-        val isSelected: Boolean = false
-    )
-
-    /**
-     * Composable-функция для отображения отдельного дня календаря.
-     */
-    @Composable
-    fun DayItem(day: CalendarDay, onClick: () -> Unit) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(horizontal = 4.dp) // Небольшой горизонтальный отступ между днями
-        ) {
-            // День недели (над кругом)
-            Text(
-                text = day.dayOfWeek,
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                color = Color.Gray // Цвет дня недели
-            )
-
-            Spacer(modifier = Modifier.height(4.dp)) // Отступ между днем недели и числом
-
-            // Число в круге
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(40.dp) // Размер круга
-                    .clip(CircleShape)
-                    .background(if (day.isSelected) Color.Blue else Color.LightGray) // Цвет фона: синий для выбранного, светло-серый для остальных
-            ) {
-                Text(
-                    text = day.dayOfMonth,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = if (day.isSelected) Color.White else Color.Black // Цвет текста
-                )
+        setContent {
+            MaterialTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize().statusBarsPadding(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    MenuCalendarScreen()
+                }
             }
         }
     }
+}
 
-    /**
-     * Composable-функция для отображения строки недели.
-     */
-    @Composable
-    fun WeekRow(days: List<CalendarDay>) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(toФp = 10.dp), // Отступ 10px сверху от самого верха
-            horizontalArrangement = Arrangement.SpaceAround // Равномерное распределение элементов
-        ) {
-            days.forEach { day ->
-                DayItem(day = day)
-            }
-        }
-    }
+/**
+ * Data class for representing a day in the menu calendar.
+ */
+data class MenuCalendarDay(
+    val date: LocalDate,
+    val dayOfMonth: String,
+    val dayOfWeek: String,
+    val isSelected: Boolean = false
+)
 
+/**
+ * Composable for displaying an individual calendar day item.
+ */
 @Composable
-fun ScrollableCalendarRow(
-    days: List<CalendarDay>,
-    onDayClick: (CalendarDay) -> Unit
+fun MenuDayItem(
+    day: MenuCalendarDay,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+            .padding(horizontal = 4.dp)
+            .clip(MaterialTheme.shapes.medium)
+            .clickable { onClick() }
+            .padding(4.dp)
+    ) {
+        Text(
+            text = day.dayOfWeek,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = if (day.isSelected) MaterialTheme.colorScheme.primary else Color.Gray
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(if (day.isSelected) MaterialTheme.colorScheme.primary else Color.LightGray)
+        ) {
+            Text(
+                text = day.dayOfMonth,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = if (day.isSelected) Color.White else Color.Black
+            )
+        }
+    }
+}
+
+/**
+ * Horizontal row of days with auto-scroll to the selected index.
+ */
+@Composable
+fun MenuScrollableCalendarRow(
+    days: List<MenuCalendarDay>,
+    onDayClick: (MenuCalendarDay) -> Unit
 ) {
     val listState = rememberLazyListState()
     val selectedIndex = days.indexOfFirst { it.isSelected }
 
-    // Программная прокрутка к выбранному дню (например, сегодня) при первом запуске
     LaunchedEffect(selectedIndex) {
         if (selectedIndex != -1) {
             listState.animateScrollToItem(index = selectedIndex)
@@ -122,43 +115,67 @@ fun ScrollableCalendarRow(
         state = listState,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 10.dp), // Отступ сверху
-        contentPadding = PaddingValues(horizontal = 8.dp), // Горизонтальные отступы по краям
-        horizontalArrangement = Arrangement.spacedBy(4.dp) // Отступ между элементами
+            .padding(top = 10.dp),
+        contentPadding = PaddingValues(horizontal = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         items(days, key = { it.date.toString() }) { day ->
-            DayItem(
+            MenuDayItem(
                 day = day,
-                onClick = { onDayClick(day) } 
+                onClick = { onDayClick(day) }
             )
         }
     }
 }
 
-// Пример использования:
-
+/**
+ * Main calendar screen Composable.
+ */
 @Composable
-fun MyCalendarScreen() {
-    val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+fun MenuCalendarScreen() {
+    // Safely get "today" without using Clock.System to avoid Kotlin 2.1 and ExperimentalTime issues
+    val today = remember {
+        val calendar = Calendar.getInstance()
+        LocalDate(
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH) + 1,
+            calendar.get(Calendar.DAY_OF_MONTH)
+        )
+    }
     var selectedDate by remember { mutableStateOf(today) }
 
-    // Генерируем дни: например, 30 дней назад и 90 дней вперед
     val daysList = remember(selectedDate) {
-        generateDays(
+        generateMenuDays(
             startDate = today.minus(30, DateTimeUnit.DAY),
-            count = 120, // Общее количество дней для отображения
+            count = 120,
             selectedDate = selectedDate
         )
     }
 
-    val handleDayClick: (CalendarDay) -> Unit = { clickedDay ->
-        selectedDate = clickedDay.date // Обновляем выбранную дату
-    }
-
     Column {
-        ScrollableCalendarRow(
+        MenuScrollableCalendarRow(
             days = daysList,
-            onDayClick = handleDayClick
+            onDayClick = { clickedDay -> selectedDate = clickedDay.date }
+        )
+    }
+}
+
+/**
+ * Generates a list of days.
+ */
+fun generateMenuDays(startDate: LocalDate, count: Int, selectedDate: LocalDate): List<MenuCalendarDay> {
+    val dayNames = listOf("SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT")
+    
+    return List(count) { i ->
+        val date = startDate.plus(i, DateTimeUnit.DAY)
+        // Convert ISO day number to 0-indexed where 0 is Sunday
+        val dayOfWeekIndex = date.dayOfWeek.isoDayNumber % 7 
+        
+        MenuCalendarDay(
+            date = date,
+            dayOfMonth = date.dayOfMonth.toString(), // Property renamed in newer versions
+            dayOfWeek = dayNames[dayOfWeekIndex],
+            isSelected = date == selectedDate
         )
     }
 }

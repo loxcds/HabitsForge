@@ -27,7 +27,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -43,13 +42,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import java.time.DayOfWeek
-import java.time.format.TextStyle
-import java.util.Locale
-import kotlin.text.format
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.toMutableStateList
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
 
 @Preview(showBackground = true, device = Devices.PIXEL)
 @Composable
@@ -72,6 +67,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    val context = LocalContext.current
 
     NavHost(
         navController = navController,
@@ -84,7 +80,12 @@ fun AppNavigation() {
             EnterActivity(navController = navController)
         }
         composable("createAccount") {
-            MenuActivity(navController = navController)
+            // Instead of a Composable, we might want to navigate to the actual Activity
+            // But if we want to stay in Compose, we use a Screen.
+            // For now, let's just make this call the MenuScreen Composable.
+            MenuScreen(onNavigateToActivity = {
+                context.startActivity(Intent(context, MenuActivity::class.java))
+            })
         }
     }
 }
@@ -210,30 +211,34 @@ fun EnterActivity(navController: NavController? = null) {
         }
     }
 }
+
 @Composable
-fun MenuActivity(navController: NavController? = null){
-    MyCalendarScreen()
+fun MenuScreen(onNavigateToActivity: () -> Unit = {}) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxSize()) {
+        Text("Account Created!")
+        Button(onClick = onNavigateToActivity) {
+            Text("Go to Menu Activity")
+        }
+        // Placeholder for the calendar
+        MainCalendarScreen()
+    }
 }
-// Data class для представления дня
-data class CalendarDay(
+
+// Renamed to avoid conflict with MenuActivity.kt
+data class MainCalendarDay(
     val dayOfMonth: String,
     val dayOfWeek: String,
     val isSelected: Boolean = false
 )
 
-/**
- * Composable-функция для отображения отдельного дня календаря с обработчиком клика.
- * @param onClick Функция, вызываемая при нажатии на этот день.
- */
 @Composable
-fun DayItem(day: CalendarDay, onClick: () -> Unit) {
+fun MainDayItem(day: MainCalendarDay, onClick: () -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .padding(horizontal = 4.dp)
-            .clickable(onClick = onClick) // Добавляем кликабельность ко всему столбцу дня
+            .clickable(onClick = onClick)
     ) {
-        // День недели (над кругом)
         Text(
             text = day.dayOfWeek,
             style = MaterialTheme.typography.labelSmall,
@@ -243,7 +248,6 @@ fun DayItem(day: CalendarDay, onClick: () -> Unit) {
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        // Число в круге
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
@@ -261,11 +265,8 @@ fun DayItem(day: CalendarDay, onClick: () -> Unit) {
     }
 }
 
-/**
- * Composable-функция для отображения строки недели.
- */
 @Composable
-fun WeekRow(days: List<CalendarDay>, onDayClick: (CalendarDay) -> Unit) {
+fun MainWeekRow(days: List<MainCalendarDay>, onDayClick: (MainCalendarDay) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -273,48 +274,39 @@ fun WeekRow(days: List<CalendarDay>, onDayClick: (CalendarDay) -> Unit) {
         horizontalArrangement = Arrangement.SpaceAround
     ) {
         days.forEach { day ->
-            DayItem(day = day, onClick = { onDayClick(day) }) // Передаем обработчик клика
+            MainDayItem(day = day, onClick = { onDayClick(day) })
         }
     }
 }
 
-// Пример использования (раскомментируйте и добавьте в ваш код):
-
-
 @Composable
-fun MyCalendarScreen() {
-    // 1. Инициализируем список дней и сохраняем его в состоянии с помощью remember
+fun MainCalendarScreen() {
     val initialDays = listOf(
-        CalendarDay("31", "Вс"),
-        CalendarDay("1", "Пн"),
-        CalendarDay("2", "Вт"),
-        CalendarDay("3", "Ср"),
-        CalendarDay("4", "Чт"),
-        CalendarDay("5", "Пт"),
-        CalendarDay("6", "Сб")
-    ).toMutableStateList() // Преобразуем в изменяемый список состояния
+        MainCalendarDay("31", "Вс"),
+        MainCalendarDay("1", "Пн"),
+        MainCalendarDay("2", "Вт"),
+        MainCalendarDay("3", "Ср"),
+        MainCalendarDay("4", "Чт"),
+        MainCalendarDay("5", "Пт"),
+        MainCalendarDay("6", "Сб")
+    ).toMutableStateList()
 
     val weekDays = remember { initialDays }
 
-    // 2. Определяем обработчик клика, который обновляет состояние
-    val handleDayClick: (CalendarDay) -> Unit = { clickedDay ->
-        // Находим индекс кликнутого дня
+    val handleDayClick: (MainCalendarDay) -> Unit = { clickedDay ->
         val index = weekDays.indexOf(clickedDay)
         if (index != -1) {
-            // Сначала сбрасываем выбор со всех остальных дней (опционально, если нужен только один выбор)
             weekDays.forEachIndexed { i, day ->
                 if (i != index && day.isSelected) {
                     weekDays[i] = day.copy(isSelected = false)
                 }
             }
-            // Обновляем состояние выбранного дня, создавая его копию с isSelected = true
             weekDays[index] = clickedDay.copy(isSelected = !clickedDay.isSelected)
         }
     }
 
     Column {
-        // 3. Передаем изменяемый список и обработчик клика в WeekRow
-        WeekRow(days = weekDays, onDayClick = handleDayClick)
+        MainWeekRow(days = weekDays, onDayClick = handleDayClick)
     }
 }
 

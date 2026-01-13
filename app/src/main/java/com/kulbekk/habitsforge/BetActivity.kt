@@ -49,7 +49,7 @@ data class HabitBet(
 )
 
 // ---------------------------------------------------------
-// 2. VIEW MODEL (Mock Logic)
+// 2. VIEW MODEL (Mock Logic).
 // ---------------------------------------------------------
 
 class BetViewModel {

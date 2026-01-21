@@ -11,9 +11,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -142,7 +140,8 @@ fun MenuCalendarScreen() {
             calendar.get(Calendar.DAY_OF_MONTH)
         )
     }
-    var selectedDate by remember { mutableStateOf(today) }
+    var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
+    var showDialog by remember { mutableStateOf(false) }
 
     val daysList = remember(selectedDate) {
         generateMenuDays(
@@ -152,10 +151,35 @@ fun MenuCalendarScreen() {
         )
     }
 
-    Column {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         MenuScrollableCalendarRow(
             days = daysList,
-            onDayClick = { clickedDay -> selectedDate = clickedDay.date }
+            onDayClick = { clickedDay -> 
+                selectedDate = if (selectedDate == clickedDay.date) null else clickedDay.date 
+            }
+        )
+
+        if (selectedDate != null) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(onClick = { showDialog = true }) {
+                Text("Добавить новую привычку")
+            }
+        }
+    }
+
+    if (showDialog && selectedDate != null) {
+        val dayNames = listOf("SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT")
+        val dayOfWeekIndex = selectedDate!!.dayOfWeek.isoDayNumber % 7
+        val selectedDayName = dayNames[dayOfWeekIndex]
+
+        CreateHabitDialog(
+            selectedDay = selectedDayName,
+            onDismiss = { showDialog = false },
+            onSave = { habit ->
+                println("Saved habit: ${habit.title} for $selectedDayName")
+                showDialog = false
+                selectedDate = null
+            }
         )
     }
 }
@@ -163,7 +187,7 @@ fun MenuCalendarScreen() {
 /**
  * Generates a list of days.
  */
-fun generateMenuDays(startDate: LocalDate, count: Int, selectedDate: LocalDate): List<MenuCalendarDay> {
+fun generateMenuDays(startDate: LocalDate, count: Int, selectedDate: LocalDate?): List<MenuCalendarDay> {
     val dayNames = listOf("SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT")
     
     return List(count) { i ->
@@ -173,7 +197,7 @@ fun generateMenuDays(startDate: LocalDate, count: Int, selectedDate: LocalDate):
         
         MenuCalendarDay(
             date = date,
-            dayOfMonth = date.dayOfMonth.toString(), // Property renamed in newer versions
+            dayOfMonth = date.dayOfMonth.toString(), 
             dayOfWeek = dayNames[dayOfWeekIndex],
             isSelected = date == selectedDate
         )

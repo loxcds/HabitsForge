@@ -1,5 +1,5 @@
 package com.kulbekk.habitsforge
-import android.R.attr.button
+
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -47,7 +47,6 @@ import androidx.compose.runtime.toMutableStateList
 import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.material3.Icon
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 
@@ -85,9 +84,6 @@ fun AppNavigation() {
             EnterActivity(navController = navController)
         }
         composable("createAccount") {
-            // Instead of a Composable, we might want to navigate to the actual Activity
-            // But if we want to stay in Compose, we use a Screen.
-            // For now, let's just make this call the MenuScreen Composable.
             MenuScreen(onNavigateToActivity = {
                 context.startActivity(Intent(context, MenuActivity::class.java))
             })
@@ -200,7 +196,6 @@ fun EnterActivity(navController: NavController? = null) {
                 Button(
                     onClick = {
                         println("Вход в аккаунт")
-                        // Здесь логика входа
                     },
                     modifier = Modifier.padding(top = 16.dp)
                 ) {
@@ -223,14 +218,12 @@ fun MenuScreen(onNavigateToActivity: () -> Unit = {}) {
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
-        // Placeholder for the calendar
         MainCalendarScreen(Modifier.weight(1f))
         pet()
         BottomButtonsScreen(Modifier.weight(1f))
     }
 }
 
-// Renamed to avoid conflict with MenuActivity.kt
 data class MainCalendarDay(
     val dayOfMonth: String,
     val dayOfWeek: String,
@@ -298,38 +291,55 @@ fun MainCalendarScreen(modifier: Modifier) {
     ).toMutableStateList()
 
     val weekDays = remember { initialDays }
+    var showDialog by remember { mutableStateOf(false) }
+    var selectedDayName by remember { mutableStateOf("") }
 
     val handleDayClick: (MainCalendarDay) -> Unit = { clickedDay ->
         val index = weekDays.indexOf(clickedDay)
         if (index != -1) {
+            val isCurrentlySelected = weekDays[index].isSelected
             weekDays.forEachIndexed { i, day ->
-                if (i != index && day.isSelected) {
+                if (day.isSelected) {
                     weekDays[i] = day.copy(isSelected = false)
                 }
             }
-            weekDays[index] = clickedDay.copy(isSelected = !clickedDay.isSelected)
+            val newSelected = !isCurrentlySelected
+            weekDays[index] = clickedDay.copy(isSelected = newSelected)
+            selectedDayName = if (newSelected) clickedDay.dayOfWeek else ""
         }
     }
 
-    Column(modifier) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         MainWeekRow(days = weekDays, onDayClick = handleDayClick)
+
+        if (selectedDayName.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(onClick = { showDialog = true }) {
+                Text("Добавить новую привычку")
+            }
+        }
+    }
+
+    if (showDialog) {
+        CreateHabitDialog(
+            selectedDay = selectedDayName,
+            onDismiss = { showDialog = false },
+            onSave = { habit ->
+                println("Сохранена привычка: ${habit.title} for $selectedDayName")
+                showDialog = false
+                selectedDayName = ""
+                weekDays.forEachIndexed { i, day -> weekDays[i] = day.copy(isSelected = false) }
+            }
+        )
     }
 }
 
-private fun BoxScope.button(
-    modifier: Modifier,
-    contentAlignment: Alignment,
-    function: () -> Unit
-) {
-}
-
-// 1. Основная кнопка
 @Composable
 fun CircularIconButton(iconResId: Int, onClick: () -> Unit) {
     val size = 50.dp
     Box(
         modifier = Modifier
-            .size(size) // Рекомендуемый размер для тач-цели
+            .size(size)
             .clip(CircleShape)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
@@ -337,32 +347,26 @@ fun CircularIconButton(iconResId: Int, onClick: () -> Unit) {
         Image(
             modifier = Modifier.size(size),
             painter = painterResource(id = iconResId),
-            contentDescription = null, // Описание для доступности
+            contentDescription = null,
             contentScale = ContentScale.FillBounds
         )
     }
 }
 
-// 2. расположение кнопок
 @Composable
 fun BottomButtonsScreen(modifier: Modifier) {
     Box(modifier = modifier) {
-        // --- Здесь может быть остальной контент вашего экрана ---
-
-        // Список иконок для отображения (пример: 3 кнопки)
-
         val iconsList = listOf(R.drawable.i1, R.drawable.i2, R.drawable.i3)
 
         Row(
             modifier = Modifier
-                .fillMaxWidth() // Занимает всю ширину
-                .align(Alignment.BottomCenter) // Привязывает всю строку к низу
-                .padding(16.dp), // Отступы от краев экрана
-            horizontalArrangement = Arrangement.SpaceEvenly // Ключевой параметр для равномерного распределения
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             iconsList.forEachIndexed { index, iconResId ->
                 CircularIconButton(iconResId = iconResId) {
-                    // Обработка нажатия конкретной кнопки по индексу
                     println("Нажата кнопка $index")
                 }
             }
@@ -381,26 +385,19 @@ fun pet(){
         R.drawable.i6
     )
 
-    // 2. Создаем состояние для хранения текущего индекса изображения
     var currentIndex by remember { mutableStateOf(0) }
-
-    // 3. Вычисляем текущий ресурс изображения
     val currentImageResId = imageResources[currentIndex]
-    Box(
-        contentAlignment = Alignment.Center // Располагает содержимое Box ровно по центру
-    ) {
+    
+    Box(contentAlignment = Alignment.Center) {
         Image(
             painter = painterResource(id = currentImageResId),
             contentDescription = "Циклическое изображение",
             modifier = Modifier
-                .size(300.dp) // Задает большой размер изображения
+                .size(300.dp)
                 .clickable {
-                    // При нажатии обновляем индекс:
-                    // (текущий_индекс + 1) % количество_всех_изображений
-                    // Это гарантирует цикл от 0 до 5 и обратно к 0
                     currentIndex = (currentIndex + 1) % imageResources.size
                 },
-            contentScale = ContentScale.Fit // Масштабирует изображение внутри заданного размера
+            contentScale = ContentScale.Fit
         )
     }
 }

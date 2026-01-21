@@ -219,11 +219,14 @@ fun EnterActivity(navController: NavController? = null) {
 
 @Composable
 fun MenuScreen(onNavigateToActivity: () -> Unit = {}) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxSize()) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)
+    ) {
         // Placeholder for the calendar
-        MainCalendarScreen()
-        BottomButtonsScreen()
+        MainCalendarScreen(Modifier.weight(1f))
         pet()
+        BottomButtonsScreen(Modifier.weight(1f))
     }
 }
 
@@ -283,7 +286,7 @@ fun MainWeekRow(days: List<MainCalendarDay>, onDayClick: (MainCalendarDay) -> Un
 }
 
 @Composable
-fun MainCalendarScreen() {
+fun MainCalendarScreen(modifier: Modifier) {
     val initialDays = listOf(
         MainCalendarDay("31", "Пн"),
         MainCalendarDay("1", "Вт"),
@@ -308,7 +311,7 @@ fun MainCalendarScreen() {
         }
     }
 
-    Column {
+    Column(modifier) {
         MainWeekRow(days = weekDays, onDayClick = handleDayClick)
     }
 }
@@ -323,25 +326,27 @@ private fun BoxScope.button(
 // 1. Основная кнопка
 @Composable
 fun CircularIconButton(iconResId: Int, onClick: () -> Unit) {
+    val size = 50.dp
     Box(
         modifier = Modifier
-            .size(36.dp) // Рекомендуемый размер для тач-цели
+            .size(size) // Рекомендуемый размер для тач-цели
             .clip(CircleShape)
-            .background(color = MaterialTheme.colorScheme.primary)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Image(
+            modifier = Modifier.size(size),
             painter = painterResource(id = iconResId),
             contentDescription = null, // Описание для доступности
+            contentScale = ContentScale.FillBounds
         )
     }
 }
 
 // 2. расположение кнопок
 @Composable
-fun BottomButtonsScreen() {
-    Box(modifier = Modifier.fillMaxSize()) {
+fun BottomButtonsScreen(modifier: Modifier) {
+    Box(modifier = modifier) {
         // --- Здесь может быть остальной контент вашего экрана ---
 
         // Список иконок для отображения (пример: 3 кнопки)
@@ -382,7 +387,6 @@ fun pet(){
     // 3. Вычисляем текущий ресурс изображения
     val currentImageResId = imageResources[currentIndex]
     Box(
-        modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center // Располагает содержимое Box ровно по центру
     ) {
         Image(

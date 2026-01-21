@@ -1,4 +1,5 @@
 package com.kulbekk.habitsforge
+import android.R.attr.button
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -44,12 +45,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.runtime.toMutableStateList
 import android.content.Intent
+import androidx.compose.foundation.Image
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material3.Icon
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 
 @Preview(showBackground = true, device = Devices.PIXEL)
 @Composable
 fun GreetingPreview() {
-    AppNavigation()
+    MenuScreen()
 }
 
 class MainActivity : ComponentActivity() {
@@ -215,12 +220,10 @@ fun EnterActivity(navController: NavController? = null) {
 @Composable
 fun MenuScreen(onNavigateToActivity: () -> Unit = {}) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxSize()) {
-        Text("Account Created!")
-        Button(onClick = onNavigateToActivity) {
-            Text("Go to Menu Activity")
-        }
         // Placeholder for the calendar
         MainCalendarScreen()
+        BottomButtonsScreen()
+        pet()
     }
 }
 
@@ -282,13 +285,13 @@ fun MainWeekRow(days: List<MainCalendarDay>, onDayClick: (MainCalendarDay) -> Un
 @Composable
 fun MainCalendarScreen() {
     val initialDays = listOf(
-        MainCalendarDay("31", "Вс"),
-        MainCalendarDay("1", "Пн"),
-        MainCalendarDay("2", "Вт"),
-        MainCalendarDay("3", "Ср"),
-        MainCalendarDay("4", "Чт"),
-        MainCalendarDay("5", "Пт"),
-        MainCalendarDay("6", "Сб")
+        MainCalendarDay("31", "Пн"),
+        MainCalendarDay("1", "Вт"),
+        MainCalendarDay("2", "Ср"),
+        MainCalendarDay("3", "Чт"),
+        MainCalendarDay("4", "Пт"),
+        MainCalendarDay("5", "Сб"),
+        MainCalendarDay("6", "Вс")
     ).toMutableStateList()
 
     val weekDays = remember { initialDays }
@@ -307,6 +310,94 @@ fun MainCalendarScreen() {
 
     Column {
         MainWeekRow(days = weekDays, onDayClick = handleDayClick)
+    }
+}
+
+private fun BoxScope.button(
+    modifier: Modifier,
+    contentAlignment: Alignment,
+    function: () -> Unit
+) {
+}
+
+// 1. Основная кнопка
+@Composable
+fun CircularIconButton(iconResId: Int, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(36.dp) // Рекомендуемый размер для тач-цели
+            .clip(CircleShape)
+            .background(color = MaterialTheme.colorScheme.primary)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = painterResource(id = iconResId),
+            contentDescription = null, // Описание для доступности
+        )
+    }
+}
+
+// 2. расположение кнопок
+@Composable
+fun BottomButtonsScreen() {
+    Box(modifier = Modifier.fillMaxSize()) {
+        // --- Здесь может быть остальной контент вашего экрана ---
+
+        // Список иконок для отображения (пример: 3 кнопки)
+
+        val iconsList = listOf(R.drawable.i1, R.drawable.i2, R.drawable.i3)
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth() // Занимает всю ширину
+                .align(Alignment.BottomCenter) // Привязывает всю строку к низу
+                .padding(16.dp), // Отступы от краев экрана
+            horizontalArrangement = Arrangement.SpaceEvenly // Ключевой параметр для равномерного распределения
+        ) {
+            iconsList.forEachIndexed { index, iconResId ->
+                CircularIconButton(iconResId = iconResId) {
+                    // Обработка нажатия конкретной кнопки по индексу
+                    println("Нажата кнопка $index")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun pet(){
+    val imageResources = listOf(
+        R.drawable.i1,
+        R.drawable.i2,
+        R.drawable.i3,
+        R.drawable.i4,
+        R.drawable.i5,
+        R.drawable.i6
+    )
+
+    // 2. Создаем состояние для хранения текущего индекса изображения
+    var currentIndex by remember { mutableStateOf(0) }
+
+    // 3. Вычисляем текущий ресурс изображения
+    val currentImageResId = imageResources[currentIndex]
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center // Располагает содержимое Box ровно по центру
+    ) {
+        Image(
+            painter = painterResource(id = currentImageResId),
+            contentDescription = "Циклическое изображение",
+            modifier = Modifier
+                .size(300.dp) // Задает большой размер изображения
+                .clickable {
+                    // При нажатии обновляем индекс:
+                    // (текущий_индекс + 1) % количество_всех_изображений
+                    // Это гарантирует цикл от 0 до 5 и обратно к 0
+                    currentIndex = (currentIndex + 1) % imageResources.size
+                },
+            contentScale = ContentScale.Fit // Масштабирует изображение внутри заданного размера
+        )
     }
 }
 

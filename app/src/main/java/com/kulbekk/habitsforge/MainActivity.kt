@@ -45,10 +45,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.runtime.toMutableStateList
 import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.Image
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 
 @Preview(showBackground = true, device = Devices.PIXEL)
 @Composable
@@ -97,13 +101,17 @@ fun Main(navController: NavController? = null) {
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         Box(Modifier.padding(innerPadding)) {
             RegistryScreen(navController = navController)
-            EnterButton(navController = navController)
         }
     }
 }
 
 @Composable
 fun RegistryScreen(navController: NavController? = null) {
+    var userName by remember { mutableStateOf("") }
+    var mail by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var isInformerVisible by remember { mutableStateOf(false) }
+
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxSize())
     {
         Image(
@@ -114,7 +122,6 @@ fun RegistryScreen(navController: NavController? = null) {
         )
         Text("Добро пожаловать в HabitsForge!\n Давайте создадим ваш аккаунт")
 
-        var userName by remember { mutableStateOf("") }
         TextField(
             value = userName,
             onValueChange = { newName ->
@@ -125,7 +132,6 @@ fun RegistryScreen(navController: NavController? = null) {
             }
         )
 
-        var mail by remember { mutableStateOf("") }
         TextField(
             value = mail,
             onValueChange = { newMail ->
@@ -136,7 +142,6 @@ fun RegistryScreen(navController: NavController? = null) {
             }
         )
 
-        var password by remember { mutableStateOf("") }
         TextField(
             value = password,
             onValueChange = { newPassword ->
@@ -151,16 +156,47 @@ fun RegistryScreen(navController: NavController? = null) {
         Text("Уже есть аккаунт", Modifier.clickable {
             navController?.navigate("enter")
         })
+
+        if (isInformerVisible) {
+            Box(
+                Modifier
+                    .padding(top = 20.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Color.Yellow.copy(alpha = 0.3f))
+            ) {
+                LaunchedEffect(isInformerVisible) {
+                    delay(2 * 1000)
+                    isInformerVisible = false
+                }
+                Text(
+                    text = "Заполните все поля",
+                    modifier = Modifier.padding(10.dp),
+                    fontSize = 20.sp
+                )
+            }
+
+        }
     }
+
+    val context = LocalContext.current
+    EnterButton(
+        onClick = {
+            if (password.isEmpty() || mail.isEmpty() || userName.isEmpty()) {
+                isInformerVisible = true
+            } else {
+                navController?.navigate("createAccount")
+            }
+        }
+    )
 }
 
 @Composable
-fun EnterButton(navController: NavController? = null){
+fun EnterButton(onClick: () -> Unit){
     Box(
         modifier = Modifier.fillMaxSize()
     ){
         OutlinedButton(
-            onClick = { navController?.navigate("createAccount") },
+            onClick = onClick,
             shape = RoundedCornerShape(0.dp),
             modifier = Modifier
 
@@ -223,7 +259,9 @@ fun EnterActivity(navController: NavController? = null) {
 fun MenuScreen(onNavigateToActivity: () -> Unit = {}) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)
+        modifier = Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
         MainCalendarScreen(Modifier.weight(1f))
         pet()

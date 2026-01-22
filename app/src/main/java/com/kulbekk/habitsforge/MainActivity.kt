@@ -415,3 +415,4 @@ class AsteriskPasswordVisualTransformation(
         return TransformedText(masked, offset)
     }
 }
+//s

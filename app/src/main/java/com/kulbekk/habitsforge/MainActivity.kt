@@ -53,7 +53,8 @@ import androidx.compose.ui.res.painterResource
 @Preview(showBackground = true, device = Devices.PIXEL)
 @Composable
 fun GreetingPreview() {
-    MenuScreen()
+    RegistryScreen()
+    //MenuScreen()
 }
 
 class MainActivity : ComponentActivity() {
@@ -103,8 +104,14 @@ fun Main(navController: NavController? = null) {
 
 @Composable
 fun RegistryScreen(navController: NavController? = null) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxSize()) {
-        Text("HABITSFORGE")
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxSize())
+    {
+        Image(
+            modifier = Modifier.size(20.dp),
+            painter = painterResource(id = R.drawable.logo2),
+            contentDescription = null,
+
+        )
         Text("Добро пожаловать в HabitsForge!\n Давайте создадим ваш аккаунт")
 
         var userName by remember { mutableStateOf("") }
@@ -387,7 +394,7 @@ fun pet(){
 
     var currentIndex by remember { mutableStateOf(0) }
     val currentImageResId = imageResources[currentIndex]
-    
+
     Box(contentAlignment = Alignment.Center) {
         Image(
             painter = painterResource(id = currentImageResId),
@@ -415,4 +422,3 @@ class AsteriskPasswordVisualTransformation(
         return TransformedText(masked, offset)
     }
 }
-//s

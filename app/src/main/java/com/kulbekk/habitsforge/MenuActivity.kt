@@ -154,8 +154,8 @@ fun MenuCalendarScreen() {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         MenuScrollableCalendarRow(
             days = daysList,
-            onDayClick = { clickedDay -> 
-                selectedDate = if (selectedDate == clickedDay.date) null else clickedDay.date 
+            onDayClick = { clickedDay ->
+                selectedDate = if (selectedDate == clickedDay.date) null else clickedDay.date
             }
         )
 
@@ -189,15 +189,15 @@ fun MenuCalendarScreen() {
  */
 fun generateMenuDays(startDate: LocalDate, count: Int, selectedDate: LocalDate?): List<MenuCalendarDay> {
     val dayNames = listOf("SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT")
-    
+
     return List(count) { i ->
         val date = startDate.plus(i, DateTimeUnit.DAY)
         // Convert ISO day number to 0-indexed where 0 is Sunday
-        val dayOfWeekIndex = date.dayOfWeek.isoDayNumber % 7 
-        
+        val dayOfWeekIndex = date.dayOfWeek.isoDayNumber % 7
+
         MenuCalendarDay(
             date = date,
-            dayOfMonth = date.dayOfMonth.toString(), 
+            dayOfMonth = date.dayOfMonth.toString(),
             dayOfWeek = dayNames[dayOfWeekIndex],
             isSelected = date == selectedDate
         )

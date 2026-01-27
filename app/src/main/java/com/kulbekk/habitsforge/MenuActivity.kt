@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -17,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.*
@@ -131,7 +133,7 @@ fun MenuScrollableCalendarRow(
  */
 @Composable
 fun MenuCalendarScreen() {
-    // Safely get "today" without using Clock.System to avoid Kotlin 2.1 and ExperimentalTime issues
+    val context = LocalContext.current
     val today = remember {
         val calendar = Calendar.getInstance()
         LocalDate(
@@ -142,6 +144,11 @@ fun MenuCalendarScreen() {
     }
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
     var showDialog by remember { mutableStateOf(false) }
+    val habits = remember {
+        mutableStateListOf<Habit>().apply {
+            addAll(HabitRepository.loadHabits(context))
+        }
+    }
 
     val daysList = remember(selectedDate) {
         generateMenuDays(
@@ -151,32 +158,87 @@ fun MenuCalendarScreen() {
         )
     }
 
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        MenuScrollableCalendarRow(
-            days = daysList,
-            onDayClick = { clickedDay -> 
-                selectedDate = if (selectedDate == clickedDay.date) null else clickedDay.date 
-            }
-        )
+    val displayDate = selectedDate ?: today
+
+    // Unified LazyColumn for the entire screen to ensure scrollability
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        item {
+            CalendarMonthTitle(month = displayDate.month, year = displayDate.year)
+        }
+
+        item {
+            MenuScrollableCalendarRow(
+                days = daysList,
+                onDayClick = { clickedDay ->
+                    selectedDate = if (selectedDate == clickedDay.date) null else clickedDay.date
+                }
+            )
+        }
 
         if (selectedDate != null) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = { showDialog = true }) {
-                Text("Добавить новую привычку")
+            val habitsForDay = habits.filter { it.selectedDates.contains(selectedDate!!) }
+
+            if (habitsForDay.isNotEmpty()) {
+                items(habitsForDay, key = { it.id }) { habit ->
+                    Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                        HabitItem(
+                            habit = habit,
+                            onDelete = {
+                                habits.remove(habit)
+                                HabitRepository.saveHabits(context, habits)
+                            }
+                        )
+                    }
+                }
+            } else {
+                item {
+                    Spacer(modifier = Modifier.height(32.dp))
+                    Text(
+                        text = "Нет привычек на этот день",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray
+                    )
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+                Button(
+                    onClick = { showDialog = true },
+                    modifier = Modifier.padding(bottom = 16.dp)
+                ) {
+                    Text("Добавить новую привычку")
+                }
+                Spacer(modifier = Modifier.height(48.dp)) // Extra space at bottom
+            }
+        } else {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Выберите день, чтобы увидеть привычки",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray
+                    )
+                }
             }
         }
     }
 
-    if (showDialog && selectedDate != null) {
-        val dayNames = listOf("SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT")
-        val dayOfWeekIndex = selectedDate!!.dayOfWeek.isoDayNumber % 7
-        val selectedDayName = dayNames[dayOfWeekIndex]
-
+    if (showDialog) {
         CreateHabitDialog(
-            selectedDay = selectedDayName,
+            initialSelectedDate = selectedDate,
             onDismiss = { showDialog = false },
             onSave = { habit ->
-                println("Saved habit: ${habit.title} for $selectedDayName")
+                habits.add(habit)
+                HabitRepository.saveHabits(context, habits)
                 showDialog = false
                 selectedDate = null
             }
@@ -189,15 +251,14 @@ fun MenuCalendarScreen() {
  */
 fun generateMenuDays(startDate: LocalDate, count: Int, selectedDate: LocalDate?): List<MenuCalendarDay> {
     val dayNames = listOf("SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT")
-    
+
     return List(count) { i ->
         val date = startDate.plus(i, DateTimeUnit.DAY)
-        // Convert ISO day number to 0-indexed where 0 is Sunday
-        val dayOfWeekIndex = date.dayOfWeek.isoDayNumber % 7 
-        
+        val dayOfWeekIndex = date.dayOfWeek.isoDayNumber % 7
+
         MenuCalendarDay(
             date = date,
-            dayOfMonth = date.dayOfMonth.toString(), 
+            dayOfMonth = date.dayOfMonth.toString(),
             dayOfWeek = dayNames[dayOfWeekIndex],
             isSelected = date == selectedDate
         )

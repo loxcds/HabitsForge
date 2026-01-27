@@ -5,23 +5,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
@@ -37,18 +26,20 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.kulbekk.habitsforge.ui.theme.HabitsForgeTheme
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.runtime.toMutableStateList
 import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import kotlinx.datetime.*
+import java.util.Calendar
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
 
 @Preview(showBackground = true, device = Devices.PIXEL)
 @Composable
@@ -214,17 +205,34 @@ fun EnterActivity(navController: NavController? = null) {
 
 @Composable
 fun MenuScreen(onNavigateToActivity: () -> Unit = {}) {
+    var isDaySelected by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val habits = remember { 
+        mutableStateListOf<Habit>().apply {
+            addAll(HabitRepository.loadHabits(context))
+        }
+    }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
-        MainCalendarScreen(Modifier.weight(1f))
-        pet()
-        BottomButtonsScreen(Modifier.weight(1f))
+        MainCalendarScreen(
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            onSelectionChanged = { isDaySelected = it },
+            habits = habits
+        )
+        
+        if (!isDaySelected) {
+            pet(isVisible = true)
+        }
+        
+        BottomButtonsScreen(modifier = Modifier.wrapContentHeight())
     }
 }
 
 data class MainCalendarDay(
+    val date: LocalDate,
     val dayOfMonth: String,
     val dayOfWeek: String,
     val isSelected: Boolean = false
@@ -235,7 +243,7 @@ fun MainDayItem(day: MainCalendarDay, onClick: () -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .padding(horizontal = 4.dp)
+            .padding(horizontal = 2.dp)
             .clickable(onClick = onClick)
     ) {
         Text(
@@ -250,13 +258,13 @@ fun MainDayItem(day: MainCalendarDay, onClick: () -> Unit) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(40.dp)
+                .size(36.dp)
                 .clip(CircleShape)
                 .background(if (day.isSelected) Color.Blue else Color.LightGray)
         ) {
             Text(
                 text = day.dayOfMonth,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Bold,
                 color = if (day.isSelected) Color.White else Color.Black
             )
@@ -265,12 +273,12 @@ fun MainDayItem(day: MainCalendarDay, onClick: () -> Unit) {
 }
 
 @Composable
-fun MainWeekRow(days: List<MainCalendarDay>, onDayClick: (MainCalendarDay) -> Unit) {
+fun MainWeekRow(days: List<MainCalendarDay>, onDayClick: (MainCalendarDay) -> Unit, modifier: Modifier = Modifier) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .padding(top = 10.dp),
-        horizontalArrangement = Arrangement.SpaceAround
+        horizontalArrangement = Arrangement.SpaceAround,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         days.forEach { day ->
             MainDayItem(day = day, onClick = { onDayClick(day) })
@@ -279,20 +287,41 @@ fun MainWeekRow(days: List<MainCalendarDay>, onDayClick: (MainCalendarDay) -> Un
 }
 
 @Composable
-fun MainCalendarScreen(modifier: Modifier) {
-    val initialDays = listOf(
-        MainCalendarDay("31", "Пн"),
-        MainCalendarDay("1", "Вт"),
-        MainCalendarDay("2", "Ср"),
-        MainCalendarDay("3", "Чт"),
-        MainCalendarDay("4", "Пт"),
-        MainCalendarDay("5", "Сб"),
-        MainCalendarDay("6", "Вс")
-    ).toMutableStateList()
+fun MainCalendarScreen(modifier: Modifier, onSelectionChanged: (Boolean) -> Unit, habits: MutableList<Habit>) {
+    val today = remember {
+        val calendar = Calendar.getInstance()
+        LocalDate(
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH) + 1,
+            calendar.get(Calendar.DAY_OF_MONTH)
+        )
+    }
 
-    val weekDays = remember { initialDays }
+    var currentStartOfWeek by remember {
+        val daysToSubtract = (today.dayOfWeek.isoDayNumber - 1)
+        mutableStateOf(today.minus(daysToSubtract, DateTimeUnit.DAY))
+    }
+
+    val dayNames = listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")
+
+    val weekDays = remember(currentStartOfWeek) {
+        mutableStateListOf<MainCalendarDay>().apply {
+            addAll(
+                List(7) { i ->
+                    val date = currentStartOfWeek.plus(i, DateTimeUnit.DAY)
+                    MainCalendarDay(
+                        date = date,
+                        dayOfMonth = date.dayOfMonth.toString(),
+                        dayOfWeek = dayNames[i],
+                        isSelected = false
+                    )
+                }
+            )
+        }
+    }
+
     var showDialog by remember { mutableStateOf(false) }
-    var selectedDayName by remember { mutableStateOf("") }
+    val context = LocalContext.current
 
     val handleDayClick: (MainCalendarDay) -> Unit = { clickedDay ->
         val index = weekDays.indexOf(clickedDay)
@@ -305,30 +334,83 @@ fun MainCalendarScreen(modifier: Modifier) {
             }
             val newSelected = !isCurrentlySelected
             weekDays[index] = clickedDay.copy(isSelected = newSelected)
-            selectedDayName = if (newSelected) clickedDay.dayOfWeek else ""
+            onSelectionChanged(newSelected)
         }
     }
 
-    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        MainWeekRow(days = weekDays, onDayClick = handleDayClick)
+    val selectedDay = weekDays.find { it.isSelected }
 
-        if (selectedDayName.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = { showDialog = true }) {
-                Text("Добавить новую привычку")
+    LazyColumn(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        item {
+            CalendarMonthTitle(month = currentStartOfWeek.month, year = currentStartOfWeek.year)
+        }
+
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = { currentStartOfWeek = currentStartOfWeek.minus(7, DateTimeUnit.DAY) }) {
+                    Icon(Icons.Default.ChevronLeft, contentDescription = "Предыдущая неделя")
+                }
+
+                MainWeekRow(
+                    days = weekDays,
+                    onDayClick = handleDayClick,
+                    modifier = Modifier.weight(1f)
+                )
+
+                IconButton(onClick = { currentStartOfWeek = currentStartOfWeek.plus(7, DateTimeUnit.DAY) }) {
+                    Icon(Icons.Default.ChevronRight, contentDescription = "Следующая неделя")
+                }
+            }
+        }
+
+        if (selectedDay != null) {
+            val habitsForDay = habits.filter { it.selectedDates.contains(selectedDay.date) }
+            
+            if (habitsForDay.isNotEmpty()) {
+                items(habitsForDay, key = { it.id }) { habit ->
+                    Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                        HabitItem(
+                            habit = habit,
+                            onDelete = {
+                                habits.remove(habit)
+                                HabitRepository.saveHabits(context, habits)
+                            }
+                        )
+                    }
+                }
+            } else {
+                item {
+                    Spacer(modifier = Modifier.height(32.dp))
+                    Text("Нет привычек на этот день", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                }
+            }
+            
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+                Button(onClick = { showDialog = true }) {
+                    Text("Добавить новую привычку")
+                }
+                Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }
 
     if (showDialog) {
         CreateHabitDialog(
-            selectedDay = selectedDayName,
+            initialSelectedDate = selectedDay?.date,
             onDismiss = { showDialog = false },
             onSave = { habit ->
-                println("Сохранена привычка: ${habit.title} for $selectedDayName")
+                habits.add(habit)
+                HabitRepository.saveHabits(context, habits)
                 showDialog = false
-                selectedDayName = ""
                 weekDays.forEachIndexed { i, day -> weekDays[i] = day.copy(isSelected = false) }
+                onSelectionChanged(false)
             }
         )
     }
@@ -356,7 +438,7 @@ fun CircularIconButton(iconResId: Int, onClick: () -> Unit) {
 @Composable
 fun BottomButtonsScreen(modifier: Modifier) {
     Box(modifier = modifier) {
-        val iconsList = listOf(R.drawable.i1, R.drawable.i2, R.drawable.i3)
+        val iconsList = listOf(R.drawable.profile, R.drawable.drugi, R.drawable.nastroiki)
 
         Row(
             modifier = Modifier
@@ -375,30 +457,32 @@ fun BottomButtonsScreen(modifier: Modifier) {
 }
 
 @Composable
-fun pet(){
+fun pet(isVisible: Boolean = true){
     val imageResources = listOf(
-        R.drawable.i1,
-        R.drawable.i2,
-        R.drawable.i3,
+        R.drawable.i1rostok,
+        R.drawable.i2rostok,
+        R.drawable.i3rostok,
         R.drawable.i4,
         R.drawable.i5,
         R.drawable.i6
     )
 
     var currentIndex by remember { mutableStateOf(0) }
-    val currentImageResId = imageResources[currentIndex]
     
-    Box(contentAlignment = Alignment.Center) {
-        Image(
-            painter = painterResource(id = currentImageResId),
-            contentDescription = "Циклическое изображение",
-            modifier = Modifier
-                .size(300.dp)
-                .clickable {
-                    currentIndex = (currentIndex + 1) % imageResources.size
-                },
-            contentScale = ContentScale.Fit
-        )
+    if (isVisible) {
+        val currentImageResId = imageResources[currentIndex]
+        Box(contentAlignment = Alignment.Center) {
+            Image(
+                painter = painterResource(id = currentImageResId),
+                contentDescription = "Циклическое изображение",
+                modifier = Modifier
+                    .size(300.dp)
+                    .clickable {
+                        currentIndex = (currentIndex + 1) % imageResources.size
+                    },
+                contentScale = ContentScale.Fit
+            )
+        }
     }
 }
 
@@ -415,4 +499,3 @@ class AsteriskPasswordVisualTransformation(
         return TransformedText(masked, offset)
     }
 }
-//s

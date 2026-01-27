@@ -134,7 +134,6 @@ fun MenuScrollableCalendarRow(
 @Composable
 fun MenuCalendarScreen() {
     val context = LocalContext.current
-    // Safely get "today" without using Clock.System to avoid Kotlin 2.1 and ExperimentalTime issues
     val today = remember {
         val calendar = Calendar.getInstance()
         LocalDate(
@@ -145,7 +144,7 @@ fun MenuCalendarScreen() {
     }
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
     var showDialog by remember { mutableStateOf(false) }
-    val habits = remember { 
+    val habits = remember {
         mutableStateListOf<Habit>().apply {
             addAll(HabitRepository.loadHabits(context))
         }
@@ -159,31 +158,29 @@ fun MenuCalendarScreen() {
         )
     }
 
-    // Determine which month to show in the title
     val displayDate = selectedDate ?: today
 
-    // Use a single LazyColumn for the whole screen to ensure full scrollability
+    // Unified LazyColumn for the entire screen to ensure scrollability
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         item {
-            // Month Title synced with style from HabitModels.kt and MainActivity.kt
             CalendarMonthTitle(month = displayDate.month, year = displayDate.year)
         }
 
         item {
             MenuScrollableCalendarRow(
                 days = daysList,
-                onDayClick = { clickedDay -> 
-                    selectedDate = if (selectedDate == clickedDay.date) null else clickedDay.date 
+                onDayClick = { clickedDay ->
+                    selectedDate = if (selectedDate == clickedDay.date) null else clickedDay.date
                 }
             )
         }
 
         if (selectedDate != null) {
             val habitsForDay = habits.filter { it.selectedDates.contains(selectedDate!!) }
-            
+
             if (habitsForDay.isNotEmpty()) {
                 items(habitsForDay, key = { it.id }) { habit ->
                     Box(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -215,7 +212,7 @@ fun MenuCalendarScreen() {
                 ) {
                     Text("Добавить новую привычку")
                 }
-                Spacer(modifier = Modifier.height(48.dp)) // Extra spacing at the bottom
+                Spacer(modifier = Modifier.height(48.dp)) // Extra space at bottom
             }
         } else {
             item {
@@ -254,15 +251,14 @@ fun MenuCalendarScreen() {
  */
 fun generateMenuDays(startDate: LocalDate, count: Int, selectedDate: LocalDate?): List<MenuCalendarDay> {
     val dayNames = listOf("SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT")
-    
+
     return List(count) { i ->
         val date = startDate.plus(i, DateTimeUnit.DAY)
-        // Convert ISO day number to 0-indexed where 0 is Sunday
-        val dayOfWeekIndex = date.dayOfWeek.isoDayNumber % 7 
-        
+        val dayOfWeekIndex = date.dayOfWeek.isoDayNumber % 7
+
         MenuCalendarDay(
             date = date,
-            dayOfMonth = date.dayOfMonth.toString(), 
+            dayOfMonth = date.dayOfMonth.toString(),
             dayOfWeek = dayNames[dayOfWeekIndex],
             isSelected = date == selectedDate
         )

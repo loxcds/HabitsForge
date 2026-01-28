@@ -2,18 +2,17 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
     namespace = "com.kulbekk.habitsforge"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.kulbekk.habitsforge"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -65,20 +64,23 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:")
-    implementation("androidx.compose.material:material-icons-extended:")
-    implementation("androidx.navigation:navigation-compose:2.9.6")
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.navigation:navigation-compose:2.8.3")
 
     // Views/Fragments Integration
-    implementation("androidx.navigation:navigation-fragment:2.9.6")
-    implementation("androidx.navigation:navigation-ui:2.9.6")
+    implementation("androidx.navigation:navigation-fragment:2.8.3")
+    implementation("androidx.navigation:navigation-ui:2.8.3")
 
     // Feature module support for Fragments
-    implementation ("androidx.navigation:navigation-dynamic-features-fragment:2.9.6")
+    implementation ("androidx.navigation:navigation-dynamic-features-fragment:2.8.3")
 
     // Testing Navigation
-    androidTestImplementation("androidx.navigation:navigation-testing:2.9.6")
+    androidTestImplementation("androidx.navigation:navigation-testing:2.8.3")
 
     // JSON serialization library, works with the Kotlin serialization plugin.
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+
+    // Coil for image loading
+    implementation(libs.coil.compose)
 }

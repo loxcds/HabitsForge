@@ -44,7 +44,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun GreetingPreview() {
     RegistryScreen()
-    //MenuScreen().
+    //MenuScreen()
 }
 
 class MainActivity : ComponentActivity() {
@@ -102,7 +102,7 @@ fun RegistryScreen(navController: NavController? = null) {
     {
         Image(
             modifier = Modifier.size(300.dp),
-            painter = painterResource(id = R.drawable.llogo2),
+            painter = painterResource(id = R.drawable.logo2),
             contentDescription = null,
 
             )
@@ -475,7 +475,7 @@ fun CircularIconButton(iconResId: Int, onClick: () -> Unit) {
 @Composable
 fun BottomButtonsScreen(modifier: Modifier) {
     Box(modifier = modifier) {
-        val iconsList = listOf(R.drawable.profile, R.drawable.drugi, R.drawable.nastroiki)
+        val iconsList = listOf(R.drawable.profilee, R.drawable.drugi, R.drawable.nastroikii)
 
         Row(
             modifier = Modifier

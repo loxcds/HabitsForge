@@ -247,7 +247,7 @@ fun MenuCalendarScreen() {
 }
 
 /**
- * Generates a list of days.
+ * Generates a list of days
  */
 fun generateMenuDays(startDate: LocalDate, count: Int, selectedDate: LocalDate?): List<MenuCalendarDay> {
     val dayNames = listOf("SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT")

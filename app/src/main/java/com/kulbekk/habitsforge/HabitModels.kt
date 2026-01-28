@@ -302,7 +302,7 @@ fun MonthPicker(
     }
 
     val firstDayOfMonth = LocalDate(year, month, 1)
-    val firstDayOfWeek = firstDayOfMonth.dayOfWeek.isoDayNumber // 1 (Mon) to 7 (Sun)
+    val firstDayOfWeek = firstDayOfMonth.dayOfWeek.isoDayNumber // 1 (Mon) to 7 (Sun).
     val emptySlots = firstDayOfWeek - 1
 
     Column {

@@ -40,11 +40,13 @@ import java.util.Calendar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 
-@Preview(showBackground = true, device = Devices.PIXEL)
 @Composable
 fun GreetingPreview() {
-    MenuScreen()
+    RegistryScreen()
+    //MenuScreen()
 }
 
 class MainActivity : ComponentActivity() {
@@ -87,18 +89,27 @@ fun Main(navController: NavController? = null) {
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         Box(Modifier.padding(innerPadding)) {
             RegistryScreen(navController = navController)
-            EnterButton(navController = navController)
         }
     }
 }
 
 @Composable
 fun RegistryScreen(navController: NavController? = null) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxSize()) {
-        Text("HABITSFORGE")
+    var userName by remember { mutableStateOf("") }
+    var mail by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var isInformerVisible by remember { mutableStateOf(false) }
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxSize())
+    {
+        Image(
+            modifier = Modifier.size(300.dp),
+            painter = painterResource(id = R.drawable.logo2),
+            contentDescription = null,
+
+            )
         Text("Добро пожаловать в HabitsForge!\n Давайте создадим ваш аккаунт")
 
-        var userName by remember { mutableStateOf("") }
         TextField(
             value = userName,
             onValueChange = { newName ->
@@ -109,7 +120,6 @@ fun RegistryScreen(navController: NavController? = null) {
             }
         )
 
-        var mail by remember { mutableStateOf("") }
         TextField(
             value = mail,
             onValueChange = { newMail ->
@@ -120,7 +130,6 @@ fun RegistryScreen(navController: NavController? = null) {
             }
         )
 
-        var password by remember { mutableStateOf("") }
         TextField(
             value = password,
             onValueChange = { newPassword ->
@@ -135,16 +144,46 @@ fun RegistryScreen(navController: NavController? = null) {
         Text("Уже есть аккаунт", Modifier.clickable {
             navController?.navigate("enter")
         })
-    }
-}
 
+        if (isInformerVisible) {
+            Box(
+                Modifier
+                    .padding(top = 20.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Color.Yellow.copy(alpha = 0.3f))
+            ) {
+                LaunchedEffect(isInformerVisible) {
+                    delay(2 * 1000)
+                    isInformerVisible = false
+                }
+                Text(
+                    text = "Заполните все поля",
+                    modifier = Modifier.padding(10.dp),
+                    fontSize = 20.sp
+                )
+            }
+
+        }
+    }
+
+    val context = LocalContext.current
+    EnterButton(
+        onClick = {
+            if (password.isEmpty() || mail.isEmpty() || userName.isEmpty()) {
+                isInformerVisible = true
+            } else {
+                navController?.navigate("createAccount")
+            }
+        }
+    )
+}
 @Composable
-fun EnterButton(navController: NavController? = null){
+fun EnterButton(onClick: () -> Unit){
     Box(
         modifier = Modifier.fillMaxSize()
     ){
         OutlinedButton(
-            onClick = { navController?.navigate("createAccount") },
+            onClick = onClick,
             shape = RoundedCornerShape(0.dp),
             modifier = Modifier
 

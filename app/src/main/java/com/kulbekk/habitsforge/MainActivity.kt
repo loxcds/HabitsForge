@@ -17,8 +17,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.tooling.preview.Devices
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -46,7 +44,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun GreetingPreview() {
     RegistryScreen()
-    //MenuScreen()
+    //MenuScreen().
 }
 
 class MainActivity : ComponentActivity() {
@@ -104,7 +102,7 @@ fun RegistryScreen(navController: NavController? = null) {
     {
         Image(
             modifier = Modifier.size(300.dp),
-            painter = painterResource(id = R.drawable.logo2),
+            painter = painterResource(id = R.drawable.llogo2),
             contentDescription = null,
 
             )
